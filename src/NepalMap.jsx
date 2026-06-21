@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 const PROVINCE_COLORS = {
   1: "#e84545",
@@ -39,40 +41,31 @@ export default function NepalMap({
   const [selectedDistrict, setSelectedDistrict] = useState(null);
   const [districtInfo, setDistrictInfo] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [leafletLoaded, setLeafletLoaded] = useState(false);
+ 
 
-  // Load Leaflet dynamically
+  
   useEffect(() => {
-    if (window.L) { setLeafletLoaded(true); return; }
-    const link = document.createElement("link");
-    link.rel = "stylesheet";
-    link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-    document.head.appendChild(link);
-    const script = document.createElement("script");
-    script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-    script.onload = () => setLeafletLoaded(true);
-    document.head.appendChild(script);
-  }, []);
+  if (!mapRef.current || leafletMapRef.current) return;
+
+  const map = L.map(mapRef.current, {
+    scrollWheelZoom: false,
+    touchZoom: true,
+    doubleClickZoom: false,
+    zoomControl: true,
+    dragging: true,
+  }).setView([28.3949, 84.124], 7);
+
+  leafletMapRef.current = map;
+}, []);
+
 
   // Initialize map
-  useEffect(() => {
-    if (!leafletLoaded || !mapRef.current || leafletMapRef.current) return;
-    const L = window.L;
-    const map = L.map(mapRef.current, {
-      scrollWheelZoom: false,
-      touchZoom: true,
-      doubleClickZoom: false,
-      zoomControl: true,
-      dragging: true,
-    }).setView([28.3949, 84.124], 7);
-    leafletMapRef.current = map;
-  }, [leafletLoaded]);
+ 
 
   // Render province layer
   useEffect(() => {
-    const L = window.L;
-    const map = leafletMapRef.current;
-    if (!L || !map || !provinceData) return;
+     const map = leafletMapRef.current;
+if (!map || !provinceData) return;
 
     if (provinceLayerRef.current) map.removeLayer(provinceLayerRef.current);
 
@@ -109,13 +102,12 @@ export default function NepalMap({
 
     provinceLayerRef.current = layer;
     map.fitBounds(layer.getBounds());
-  }, [leafletLoaded, provinceData]);
+  }, [ provinceData]);
 
   // Render district layer when a province is selected
   useEffect(() => {
-    const L = window.L;
-    const map = leafletMapRef.current;
-    if (!L || !map) return;
+   const map = leafletMapRef.current;
+if (!map) return;
 
     if (districtLayerRef.current) {
       map.removeLayer(districtLayerRef.current);
